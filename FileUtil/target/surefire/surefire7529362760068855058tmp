@@ -1,0 +1,5 @@
+#surefire
+#Tue Jul 26 22:49:28 JST 2011
+user.dir=/home/kou/workspaces/twitter.workspace/FileUtil
+localRepository=/home/kou/.m2/repository
+basedir=/home/kou/workspaces/twitter.workspace/FileUtil
