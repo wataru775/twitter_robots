@@ -109,4 +109,37 @@ public class GooTVGuideTweatServiceImplTest {
 		assertNotNull(results);
 		assertEquals(0,results.size());	
 	}
+	@Test
+	public void testCachedProgramTweat(){
+		service.setNewAnimeProgramParser(new AnimeProgramParser() {
+			@Override
+			public List<TelevisionProgram> parse() throws IOException {
+				List<TelevisionProgram>  results = new java.util.LinkedList<TelevisionProgram>();
+				results.add(TelevisionProgram.valueOf("2/27（日） 01:00〜01:30", "フラクタル", "BSフジ[8ch]", "アニメ／特撮"));
+				results.add(TelevisionProgram.valueOf("2/27（日） 01:30〜02:00", "放浪息子", "BSフジ[8ch]", "アニメ／特撮"));
+				return results;
+			}
+		});
+		service.setEndAnimeProgramParser(new AnimeProgramParser() {
+			@Override
+			public List<TelevisionProgram> parse() throws IOException {
+				List<TelevisionProgram>  results = new java.util.LinkedList<TelevisionProgram>();
+				TelevisionProgram tvProgram = TelevisionProgram.valueOf("2/27（日） 02:58〜03:28", "みつどもえ増量中!", "毎日放送[4]", "アニメ／特撮");
+				results.add(tvProgram);
+				return results;
+			}
+		});
+		// キャッシュを格納する
+		service.setCacheInterface(new AnimeTweatCache(){
+				public java.util.List<TelevisionProgram> getData(){
+					List<TelevisionProgram>  results = new java.util.LinkedList<TelevisionProgram>();
+					return results;
+				}});
+		List<String> results;
+		// 初回はでるが
+		results =service.getTweatMessages();
+		// 二度目はでません。
+		results =service.getTweatMessages();
+		assertEquals(0,results.size());	
+	}
 }

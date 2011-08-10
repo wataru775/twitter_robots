@@ -7,42 +7,47 @@ import java.util.List;
 import org.mmpp.spider.goo.util.TelevisionProgram;
 
 /**
- * Gooの最新情報からTweatメッセージを生成します
- * @author kou
- *
+ * Gooの番組表Webページから番組情報を抽出するサービス実装クラス
+ * @author mmpp wataru
+ * @since 0.0.1
  */
 public class GooTVGuideTweatServiceImpl implements GooTVGuideTweatService {
-
+	/**
+	 * ログ
+	 */
+	protected static org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger( GooTVGuideTweatServiceImpl.class ); 
 	@Override
 	public List<String> getTweatMessages() {
-		System.out.println("hello GooTVGuideTweatServiceImpl");
+		log.info("hello GooTVGuideTweatServiceImpl");
 		List<String> messages = new java.util.LinkedList<String>();
 		
 		String prefix = "[番組表]";
 		try {
 			for(TelevisionProgram tvProgram : getNewAnimeProgurams()){
-				if(getCache().contains(tvProgram))
+				if(getCachePrograms().contains(tvProgram))
 					continue;
 			   String message = castTelevisionProgram2Message(tvProgram);
 				messages.add(prefix+"[新]"+message);
+				addCachePrograms(tvProgram);
 			}
 			for(TelevisionProgram tvProgram : getEndAnimeProgurams()){
-				if(getCache().contains(tvProgram))
+				if(getCachePrograms().contains(tvProgram))
 					continue;
 			   String message = castTelevisionProgram2Message(tvProgram);
 				messages.add(prefix+"[終]"+message);
+				addCachePrograms(tvProgram);
 			}
 		} catch (MalformedURLException e) {
-			e.printStackTrace();
+			log.error("番組解析中に例外が発生しました",e);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("番組解析中に例外が発生しました",e);
 		}
 
 		// TODO 内部キャッシュを比較して、既に出した情報は排除する
 
 		return messages;
 	}
+
 
 	/**
 	 * アニメ新番組情報を取得します<br>
@@ -74,8 +79,7 @@ public class GooTVGuideTweatServiceImpl implements GooTVGuideTweatService {
 				String url = "http://tv.goo.ne.jp/search/result.php?genres%5B%5D=IA%7CIB&category=all&details%5B%5D=%5B%BF%B7%5D&key=&=%A1%A1%A1%A1%B8%A1%BA%F7%A1%A1%A1%A1";
 				_newAnimeProgramParser = new AnimeProgramParserImpl(url);
 			} catch (MalformedURLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.error("新番組解析中に例外が発生しました",e);
 			}
 		}
 		return _newAnimeProgramParser;
@@ -94,27 +98,13 @@ public class GooTVGuideTweatServiceImpl implements GooTVGuideTweatService {
 				String url = "http://tv.goo.ne.jp/search/result.php?genres%5B%5D=IA%7CIB&category=all&details%5B%5D=%5B%BA%C7%BD%AA%B2%F3%5D%7C%5B%BD%AA%5D&key=&=%A1%A1%A1%A1%B8%A1%BA%F7%A1%A1%A1%A1";
 				_endAnimeProgramParser = new AnimeProgramParserImpl(url);
 			} catch (MalformedURLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.error("最終回解析中に例外が発生しました",e);
 			}
 		}
 		return _endAnimeProgramParser;
 	}
 	public void setEndAnimeProgramParser(AnimeProgramParser animeProgramParser){
 		_endAnimeProgramParser =  animeProgramParser;
-	}
-
-	
-	private List<String> castTelevisionProgram2Messages(List<TelevisionProgram> tvPrograms){
-			List<String> messages = new java.util.LinkedList<String>();
-			for(TelevisionProgram tvProgram : tvPrograms){
-			String message = castTelevisionProgram2Message(tvProgram);
-			if(message.length()>0)
-				messages.add(message);
-		}
-
-		System.out.println(" searchAnimeProgurams : " + messages.size()+" messages. ");
-		return messages;
 	}
 
 	private String castTelevisionProgram2Message(TelevisionProgram tvProgram) {
@@ -126,8 +116,8 @@ public class GooTVGuideTweatServiceImpl implements GooTVGuideTweatService {
 		bufMessage.append(tvProgram.getChannel());
 		bufMessage.append(" ");
 		bufMessage.append(tvProgram.getTitle());
-		System.out.println(" castTelevisionProgram2Message ( " + tvProgram.toString() +" ) " );
-		System.out.println(" castTelevisionProgram2Message return : " + bufMessage.toString());
+		log.debug(" castTelevisionProgram2Message ( " + tvProgram.toString() +" ) " );
+		log.debug(" castTelevisionProgram2Message return : " + bufMessage.toString());
 		return bufMessage.toString();
 	}
 	AnimeProgramParser _animeProgramPerser;
@@ -148,8 +138,15 @@ public class GooTVGuideTweatServiceImpl implements GooTVGuideTweatService {
 	public AnimeTweatCache getCacheInterface() {
 		return _animeTweatCacheInterface;
 	}
-	java.util.List<TelevisionProgram> _cache = null;
-	public java.util.List<TelevisionProgram> getCache(){
+	/**
+	 * 処理済み番組情報格納変数
+	 */
+	private java.util.List<TelevisionProgram> _cache = null;
+	/**
+	 * 完了番組情報一覧を取得します
+	 * @return 完了番組情報一覧
+	 */
+	public java.util.List<TelevisionProgram> getCachePrograms(){
 		if(_cache==null){
 			_cache = new java.util.LinkedList<TelevisionProgram>();
 			if(getCacheInterface()!=null){
@@ -157,6 +154,14 @@ public class GooTVGuideTweatServiceImpl implements GooTVGuideTweatService {
 			}
 		}
 		return _cache;
+	}
+	/**
+	 * 完了番組をキャッシュに追加します
+	 * @param tvProgram 番組情報
+	 */
+	private void addCachePrograms(TelevisionProgram tvProgram) {
+		getCachePrograms().add(tvProgram);
+//		getCacheInterface().add(tvProgram);
 	}
 
 }

@@ -7,7 +7,11 @@ import org.mmpp.spider.goo.util.Html2AnimeUtil;
 import org.mmpp.spider.goo.util.TelevisionProgram;
 import org.mmpp.spider.util.CrawlerUtil;
 
-
+/**
+ * 指定のアニメ番組抽出抽象クラス
+ * @author mmpp wataru
+ * @since 0.0.1
+ */
 public abstract class AbstractAnimeProgramParser implements AnimeProgramParser{
 
 	/**
@@ -18,9 +22,10 @@ public abstract class AbstractAnimeProgramParser implements AnimeProgramParser{
 	 */
 	@Override
 	public List<TelevisionProgram> parse() throws IOException {
-
+		
 		java.net.URLConnection conn = getUrl().openConnection();
 		{
+			// ダミークッキー 大阪地域
 			conn.setRequestProperty("Cookie", "NGUserID=d2a0c960-335-1251462166-1; BTA=R003M000; gooproperty=AR%3D27142%26TH%3D0%26WE%3D6200%26MP%3Dkinki%26TR%3Dkinki%26TP%3D27%26TV%3D025; iepg=1; gcode=1; cast=1; searchstate=NAV%3D1");
 		}
 		// urlにアクセスします...
